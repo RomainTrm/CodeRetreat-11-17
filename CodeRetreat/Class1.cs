@@ -1,5 +1,8 @@
 ﻿using NUnit.Framework;
 using NFluent;
+using System;
+using Moq;
+using System.Collections.Generic;
 
 namespace CodeRetreat
 {
@@ -7,80 +10,100 @@ namespace CodeRetreat
     public class GolShould
     {
         [Test]
-        [TestCase(0)]
-        [TestCase(1)]
-        public void DieFromUnderPopulation(int nbNeighbours)
+        public void BeDeadWhenHaveLessThanTwoLivingNeighbours()
         {
-            const bool livingCell = true;
-            Check.That(IsDead(livingCell, nbNeighbours)).IsTrue();
+            Check.That(IsAlive(new LivingCell(), new UnderPopulated())).IsFalse();
         }
 
         [Test]
-        [TestCase(2)]
-        [TestCase(3)]
-        public void StayAliveWhenPopulationIsStable(int nbNeighbours)
+        public void BeDeadWhenHaveMoreThanThreeLivingNeighbours()
         {
-            const bool livingCell = true;
-            Check.That(IsDead(livingCell, nbNeighbours)).IsFalse();
+            Check.That(IsAlive(new LivingCell(), new OverPopulated())).IsFalse();
         }
 
         [Test]
-        [TestCase(4)]
-        [TestCase(5)]
-        [TestCase(6)]
-        [TestCase(7)]
-        [TestCase(8)]
-        public void DieFromOverPopulation(int nbNeighbours)
+        public void BecomeAliveWhenHaveThreeLivingNeighbours()
         {
-            const bool livingCell = true;
-            Check.That(IsDead(livingCell, nbNeighbours)).IsTrue();
+            Check.That(IsAlive(new DeadCell(), new GenetivePopulation())).IsTrue();
         }
 
         [Test]
-        public void StayDeadWhenHaveTwoNeighbours()
+        public void StayDeadWhenHaveNotThreeLivingNeighbours()
         {
-            const bool deadCell = false;
-            const int nbNeighbours = 2;
-            Check.That(IsDead(deadCell, nbNeighbours)).IsTrue();
+            Check.That(IsAlive(new DeadCell(), new UnderPopulated())).IsFalse();
+            Check.That(IsAlive(new DeadCell(), new StablePopulation())).IsFalse();
+            Check.That(IsAlive(new DeadCell(), new OverPopulated())).IsFalse();
         }
 
         [Test]
-        public void ReviveWithPerfectPopulation()
+        public void StayAliveWhenHaveTwoOrThreeLivingNeighbours()
         {
-            const int perfectPopulation = 3;
-            const bool deadCell = false;
-            Check.That(IsDead(deadCell, perfectPopulation)).IsFalse();
+            Check.That(IsAlive(new LivingCell(), new StablePopulation())).IsTrue();
+            Check.That(IsAlive(new LivingCell(), new GenetivePopulation())).IsTrue();
         }
 
-        [Test]
-        [TestCase(0)]
-        [TestCase(1)]
-        [TestCase(2)]
-        [TestCase(4)]
-        [TestCase(5)]
-        [TestCase(6)]
-        [TestCase(7)]
-        [TestCase(8)]
-        public void StayDeadWhenDontHavePerfectPopulation(int nbNeighbours)
+        public interface Cell
         {
-            const bool deadCell = false;
-            Check.That(IsDead(deadCell, nbNeighbours)).IsTrue();
-        }
-        
-        private bool IsDead(bool isAlive, int nbNeighbours)
-        {
-            if (IsGenerativePopulation(nbNeighbours)) return false;
-            if (IsUnstablePopulation(nbNeighbours)) return true;
-            return !isAlive;
         }
 
-        private bool IsUnstablePopulation(int nbNeighbours) 
-            => IsUnderPopulation(nbNeighbours) || IsOverPopulation(nbNeighbours);
+        public class LivingCell : Cell
+        {
+        }
 
-        private bool IsOverPopulation(int nbNeighbours) => nbNeighbours > 3;
+        public class DeadCell : Cell
+        {
+        }
 
-        private bool IsUnderPopulation(int nbNeighbours) => nbNeighbours < 2;
+        public abstract class Population
+        {
+            private readonly Dictionary<Type, Func<object, bool>> _mapper;
 
-        private bool IsGenerativePopulation(int nbNeighbours) => nbNeighbours == 3;
+            public Population()
+            {
+                _mapper = new Dictionary<Type, System.Func<object, bool>>
+                {
+                    { typeof(LivingCell), cell => this.IsAlive((LivingCell)cell) },
+                    { typeof(DeadCell), cell => this.IsAlive((DeadCell)cell) }
+                };
+            }
+
+            public bool IsAlive(Cell cell) => _mapper[cell.GetType()](cell);
+
+            public abstract bool IsAlive(LivingCell cell);
+            public abstract bool IsAlive(DeadCell cell);
+        }
+
+        public class UnderPopulated : Population
+        {
+            public override bool IsAlive(LivingCell cell) => false;
+
+            public override bool IsAlive(DeadCell cell) => false;
+        }
+
+        public class OverPopulated : Population
+        {
+            public override bool IsAlive(LivingCell cell) => false;
+
+            public override bool IsAlive(DeadCell cell) => false;
+        }
+
+        public class StablePopulation : Population
+        {
+            public override bool IsAlive(LivingCell cell) => true;
+
+            public override bool IsAlive(DeadCell cell) => false;
+        }
+
+        public class GenetivePopulation : Population
+        {
+            public override bool IsAlive(LivingCell cell) => true;
+
+            public override bool IsAlive(DeadCell cell) => true;
+        }
+
+        private bool IsAlive(Cell cell, Population neighbours)
+        {
+            return neighbours.IsAlive(cell);
+        }
     }
 }
