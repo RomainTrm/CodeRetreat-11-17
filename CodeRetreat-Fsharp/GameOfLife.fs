@@ -10,13 +10,12 @@ type CellState =
 | Dead
 
 let nextState nbLivingNeighbours currentCellState =
-    match currentCellState with
-    | Living -> if nbLivingNeighbours = 2 || nbLivingNeighbours = 3
-                then Living
-                else Dead
-    | Dead -> if nbLivingNeighbours = 3
-              then Living
-              else Dead
+    match currentCellState, nbLivingNeighbours with
+    | Living, 2 -> Living
+    | Living, 3 -> Living
+    | Living, _ -> Dead
+    | Dead, 3 -> Living
+    | Dead, _ -> Dead
 
 [<Theory>]
 [<InlineData 0>]
