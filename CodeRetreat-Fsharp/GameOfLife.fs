@@ -10,7 +10,9 @@ type CellState =
 | Dead
 
 let nextState nbLivingNeighbours currentCellState =
-    Dead
+    if nbLivingNeighbours = 2 || nbLivingNeighbours = 3
+    then Living
+    else Dead
 
 [<Theory>]
 [<InlineData 0>]
@@ -27,3 +29,9 @@ let ``Should die when have less than two alive neighbours`` nbLivingNeighbours =
 [<InlineData 8>]
 let ``Should die when have more than three alive neighbours`` nbLivingNeighbours =
     test <@ Living |> nextState nbLivingNeighbours = Dead @>
+
+[<Theory>]
+[<InlineData 2>]
+[<InlineData 3>]
+let ``Should stay alive when have two or three alive neighbours`` nbLivingNeighbours =
+    test <@ Living |> nextState nbLivingNeighbours = Living @>
