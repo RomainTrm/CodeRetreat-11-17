@@ -15,11 +15,15 @@ let nextStateForLiving nbLivingNeighbours =
     | 3 -> Living
     | _ -> Dead
 
+let nextStateForDead nbLivingNeighbours =
+    match nbLivingNeighbours with
+    | 3 -> Living
+    | _ -> Dead
+
 let nextState nbLivingNeighbours currentCellState =
-    match currentCellState, nbLivingNeighbours with
-    | Living, _ -> nextStateForLiving nbLivingNeighbours
-    | Dead, 3 -> Living
-    | Dead, _ -> Dead
+    match currentCellState with
+    | Living -> nextStateForLiving nbLivingNeighbours
+    | Dead -> nextStateForDead nbLivingNeighbours
 
 [<Theory>]
 [<InlineData 0>]
