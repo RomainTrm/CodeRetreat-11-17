@@ -45,6 +45,13 @@ let ``Should become alive when have three alive neighbours`` nbLivingNeighbours 
     test <@ Dead |> nextState nbLivingNeighbours = Living @>
 
 [<Theory>]
+[<InlineData 0>]
+[<InlineData 1>]
 [<InlineData 2>]
+[<InlineData 4>]
+[<InlineData 5>]
+[<InlineData 6>]
+[<InlineData 7>]
+[<InlineData 8>]
 let ``Should stay dead when have two alive neighbours`` nbLivingNeighbours =
     test <@ Dead |> nextState nbLivingNeighbours = Dead @>
