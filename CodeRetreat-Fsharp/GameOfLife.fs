@@ -9,11 +9,15 @@ type CellState =
 | Living
 | Dead
 
+let nextStateForLiving nbLivingNeighbours =
+    match nbLivingNeighbours with
+    | 2 -> Living
+    | 3 -> Living
+    | _ -> Dead
+
 let nextState nbLivingNeighbours currentCellState =
     match currentCellState, nbLivingNeighbours with
-    | Living, 2 -> Living
-    | Living, 3 -> Living
-    | Living, _ -> Dead
+    | Living, _ -> nextStateForLiving nbLivingNeighbours
     | Dead, 3 -> Living
     | Dead, _ -> Dead
 
