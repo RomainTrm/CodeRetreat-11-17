@@ -14,4 +14,10 @@ let nextState nbLivingNeighbours currentCellState =
 
 [<Fact>]
 let ``Should die when have less than two alive neighbours``() =
-    test <@ Dead |> nextState 1 = Dead @>
+    test <@ Living |> nextState 1 = Dead @>
+
+
+[<Fact>]
+let ``Should die when have more than three alive neighbours``() =
+    test <@ Living |> nextState 4 = Dead @>
+
