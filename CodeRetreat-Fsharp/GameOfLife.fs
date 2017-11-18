@@ -3,8 +3,6 @@ module GameOfLife
 open Swensen.Unquote
 open Xunit
 
-type NbLivingNeighbours = int
-
 type CellState =
 | Living
 | Dead
@@ -20,16 +18,16 @@ let nextStateForDead nbLivingNeighbours =
     | 3 -> Living
     | _ -> Dead
 
-let nextState nbLivingNeighbours currentCellState =
+let nextState currentCellState =
     match currentCellState with
-    | Living -> nextStateForLiving nbLivingNeighbours
-    | Dead -> nextStateForDead nbLivingNeighbours
+    | Living -> nextStateForLiving
+    | Dead -> nextStateForDead
 
 [<Theory>]
 [<InlineData 0>]
 [<InlineData 1>]
 let ``Should die when have less than two alive neighbours`` nbLivingNeighbours =
-    test <@ Living |> nextState nbLivingNeighbours = Dead @>
+    test <@ nextState Living nbLivingNeighbours = Dead @>
 
 [<Theory>]
 [<InlineData 4>]
@@ -38,18 +36,18 @@ let ``Should die when have less than two alive neighbours`` nbLivingNeighbours =
 [<InlineData 7>]
 [<InlineData 8>]
 let ``Should die when have more than three alive neighbours`` nbLivingNeighbours =
-    test <@ Living |> nextState nbLivingNeighbours = Dead @>
+    test <@ nextState Living nbLivingNeighbours = Dead @>
 
 [<Theory>]
 [<InlineData 2>]
 [<InlineData 3>]
 let ``Should stay alive when have two or three alive neighbours`` nbLivingNeighbours =
-    test <@ Living |> nextState nbLivingNeighbours = Living @>
+    test <@ nextState Living nbLivingNeighbours = Living @>
 
 [<Theory>]
 [<InlineData 3>]
 let ``Should become alive when have three alive neighbours`` nbLivingNeighbours =
-    test <@ Dead |> nextState nbLivingNeighbours = Living @>
+    test <@ nextState Dead nbLivingNeighbours = Living @>
 
 [<Theory>]
 [<InlineData 0>]
@@ -61,4 +59,4 @@ let ``Should become alive when have three alive neighbours`` nbLivingNeighbours 
 [<InlineData 7>]
 [<InlineData 8>]
 let ``Should stay dead when have two alive neighbours`` nbLivingNeighbours =
-    test <@ Dead |> nextState nbLivingNeighbours = Dead @>
+    test <@ nextState Dead nbLivingNeighbours = Dead @>
