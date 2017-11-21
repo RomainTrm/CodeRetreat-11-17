@@ -1,109 +1,87 @@
 ﻿using NUnit.Framework;
-using NFluent;
 using System;
 using Moq;
-using System.Collections.Generic;
 
 namespace CodeRetreat
 {
-    [TestFixture]
-    public class GolShould
+    public interface INextGeneration
     {
-        [Test]
-        public void BeDeadWhenHaveLessThanTwoLivingNeighbours()
-        {
-            Check.That(IsAlive(new LivingCell(), new UnderPopulated())).IsFalse();
-        }
+        void SetNextGeneration(CellState cellState);
+    }
+
+    [TestFixture]
+    public class CellShould
+    {
+        private const int StablePopulation = 2;
+        private const int NativePopulation = 3;
+        private Mock<INextGeneration> _mock;
+
+        [SetUp]
+        public void Setup() => _mock = new Mock<INextGeneration>();
 
         [Test]
-        public void BeDeadWhenHaveMoreThanThreeLivingNeighbours()
+        [TestCase(0)]
+        [TestCase(1)]
+        public void BeDeadWhenUnderPopulated(int nbNeighbours)
         {
-            Check.That(IsAlive(new LivingCell(), new OverPopulated())).IsFalse();
-        }
-
-        [Test]
-        public void BecomeAliveWhenHaveThreeLivingNeighbours()
-        {
-            Check.That(IsAlive(new DeadCell(), new GenetivePopulation())).IsTrue();
-        }
-
-        [Test]
-        public void StayDeadWhenHaveNotThreeLivingNeighbours()
-        {
-            Check.That(IsAlive(new DeadCell(), new UnderPopulated())).IsFalse();
-            Check.That(IsAlive(new DeadCell(), new StablePopulation())).IsFalse();
-            Check.That(IsAlive(new DeadCell(), new OverPopulated())).IsFalse();
+            NextGeneration(It.IsAny<CellState>(), nbNeighbours, _mock.Object.SetNextGeneration);
+            _mock.Verify(x => x.SetNextGeneration(CellState.Dead));
         }
 
         [Test]
-        public void StayAliveWhenHaveTwoOrThreeLivingNeighbours()
+        [TestCase(2)]
+        [TestCase(3)]
+        public void StayAlive_WhenAliveAndOnSustainablePopulation(int nbNeighbours)
         {
-            Check.That(IsAlive(new LivingCell(), new StablePopulation())).IsTrue();
-            Check.That(IsAlive(new LivingCell(), new GenetivePopulation())).IsTrue();
+            NextGeneration(CellState.Living, nbNeighbours, _mock.Object.SetNextGeneration);
+            _mock.Verify(x => x.SetNextGeneration(CellState.Living));
         }
 
-        public interface Cell
+        [Test]
+        public void ShouldBecomeAliveWhen3LivingNeighbours()
         {
+            NextGeneration(CellState.Dead, 3, _mock.Object.SetNextGeneration);
+            _mock.Verify(x => x.SetNextGeneration(CellState.Living));
         }
 
-        public class LivingCell : Cell
+        [Test]
+        public void ShouldStayDeadWhen2LivingNeighbours()
         {
+            NextGeneration(CellState.Dead, 2, _mock.Object.SetNextGeneration);
+            _mock.Verify(x => x.SetNextGeneration(CellState.Dead));
         }
 
-        public class DeadCell : Cell
+        [Test]
+        [TestCase(4)]
+        [TestCase(5)]
+        [TestCase(6)]
+        [TestCase(7)]
+        [TestCase(8)]
+        public void BeDeadWhenOverPopulated(int nbNeighbours)
         {
+            NextGeneration(It.IsAny<CellState>(), nbNeighbours, _mock.Object.SetNextGeneration);
+            _mock.Verify(x => x.SetNextGeneration(CellState.Dead));
         }
 
-        public abstract class Population
+        public static void NextGeneration(CellState state, int nbNeighbours, Action<CellState> nextStateCallback)
         {
-            private readonly Dictionary<Type, Func<object, bool>> _mapper;
-
-            public Population()
+            switch (nbNeighbours)
             {
-                _mapper = new Dictionary<Type, System.Func<object, bool>>
-                {
-                    { typeof(LivingCell), cell => this.IsAlive((LivingCell)cell) },
-                    { typeof(DeadCell), cell => this.IsAlive((DeadCell)cell) }
-                };
+                case StablePopulation:
+                    nextStateCallback(state);
+                    break;
+                case NativePopulation:
+                    nextStateCallback(CellState.Living);
+                    break;
+                default:
+                    nextStateCallback(CellState.Dead);
+                    break;
             }
-
-            public bool IsAlive(Cell cell) => _mapper[cell.GetType()](cell);
-
-            public abstract bool IsAlive(LivingCell cell);
-            public abstract bool IsAlive(DeadCell cell);
         }
+    }
 
-        public class UnderPopulated : Population
-        {
-            public override bool IsAlive(LivingCell cell) => false;
-
-            public override bool IsAlive(DeadCell cell) => false;
-        }
-
-        public class OverPopulated : Population
-        {
-            public override bool IsAlive(LivingCell cell) => false;
-
-            public override bool IsAlive(DeadCell cell) => false;
-        }
-
-        public class StablePopulation : Population
-        {
-            public override bool IsAlive(LivingCell cell) => true;
-
-            public override bool IsAlive(DeadCell cell) => false;
-        }
-
-        public class GenetivePopulation : Population
-        {
-            public override bool IsAlive(LivingCell cell) => true;
-
-            public override bool IsAlive(DeadCell cell) => true;
-        }
-
-        private bool IsAlive(Cell cell, Population neighbours)
-        {
-            return neighbours.IsAlive(cell);
-        }
+    public enum CellState
+    {
+        Living, Dead
     }
 }
